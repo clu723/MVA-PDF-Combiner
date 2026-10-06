@@ -1,0 +1,213 @@
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <meta
+        name="description"
+        content="Combine multiple PDF files into one PDF directly in your browser."
+    >
+
+    <title>PDF Combiner</title>
+
+    <link rel="stylesheet" href="style.css">
+
+    <!-- PDF-LIB -->
+    <script
+        src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"
+    ></script>
+</head>
+
+<body>
+
+    <main class="container">
+
+        <header class="header">
+            <h1>PDF Combiner</h1>
+
+            <p>
+                Combine multiple PDF files into one PDF.
+            </p>
+
+            <div class="privacy">
+                <span class="privacy-icon">🔒</span>
+                <span>
+                    Your files never leave your device.
+                    Everything is processed in your browser.
+                </span>
+            </div>
+        </header>
+
+
+        <!-- DROP ZONE -->
+        <section
+            id="dropZone"
+            class="drop-zone"
+        >
+
+            <div class="upload-icon">
+                ↑
+            </div>
+
+            <h2>Drop PDF files here</h2>
+
+            <p>or</p>
+
+            <button
+                type="button"
+                id="browseButton"
+                class="browse-button"
+            >
+                Browse Files
+            </button>
+
+            <input
+                type="file"
+                id="fileInput"
+                accept=".pdf,application/pdf"
+                multiple
+                hidden
+            >
+
+            <small>
+                Select multiple PDF files at once
+            </small>
+
+        </section>
+
+
+        <!-- FILE LIST -->
+        <section
+            id="fileSection"
+            class="file-section hidden"
+        >
+
+            <div class="section-header">
+
+                <div>
+                    <h2>Files</h2>
+
+                    <span id="fileSummary">
+                        0 files
+                    </span>
+                </div>
+
+                <button
+                    type="button"
+                    id="clearButton"
+                    class="text-button"
+                >
+                    Clear all
+                </button>
+
+            </div>
+
+
+            <div
+                id="fileList"
+                class="file-list"
+            >
+            </div>
+
+            <div class="drag-help">
+                ☰ Drag files to change their order
+            </div>
+
+        </section>
+
+
+        <!-- OPTIONS -->
+        <section
+            id="optionsSection"
+            class="options-section hidden"
+        >
+
+            <label for="filename">
+                Output filename
+            </label>
+
+            <div class="filename-wrapper">
+
+                <input
+                    type="text"
+                    id="filename"
+                    value="combined.pdf"
+                    autocomplete="off"
+                >
+
+            </div>
+
+
+            <button
+                type="button"
+                id="combineButton"
+                class="combine-button"
+            >
+                <span id="combineButtonText">
+                    Combine PDFs
+                </span>
+
+                <span
+                    id="spinner"
+                    class="spinner hidden"
+                ></span>
+            </button>
+
+
+            <div
+                id="progressContainer"
+                class="progress-container hidden"
+            >
+
+                <div class="progress-bar-background">
+
+                    <div
+                        id="progressBar"
+                        class="progress-bar"
+                    ></div>
+
+                </div>
+
+                <div
+                    id="progressText"
+                    class="progress-text"
+                >
+                    Preparing...
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- MESSAGE -->
+        <div
+            id="message"
+            class="message hidden"
+        >
+        </div>
+
+
+        <footer>
+
+            <p>
+                PDF files are processed locally in your browser.
+                They are never uploaded.
+            </p>
+
+        </footer>
+
+    </main>
+
+
+    <script src="app.js"></script>
+
+</body>
+</html>
+```
