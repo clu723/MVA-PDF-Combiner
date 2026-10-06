@@ -1,43 +1,29 @@
 ```javascript
 // ============================================
 // PDF COMBINER
-// Client-side PDF merging using PDF-LIB
 // ============================================
 
-
-// --------------------------------------------
-// STATE
-// --------------------------------------------
-
 let files = [];
-
 let draggedIndex = null;
 
 
-// --------------------------------------------
+// ============================================
 // ELEMENTS
-// --------------------------------------------
+// ============================================
 
 const dropZone = document.getElementById("dropZone");
-
 const browseButton = document.getElementById("browseButton");
-
 const fileInput = document.getElementById("fileInput");
 
 const fileSection = document.getElementById("fileSection");
-
 const optionsSection = document.getElementById("optionsSection");
-
 const fileList = document.getElementById("fileList");
-
 const fileSummary = document.getElementById("fileSummary");
 
 const clearButton = document.getElementById("clearButton");
-
 const filenameInput = document.getElementById("filename");
 
 const combineButton = document.getElementById("combineButton");
-
 const combineButtonText =
     document.getElementById("combineButtonText");
 
@@ -57,35 +43,32 @@ const message =
     document.getElementById("message");
 
 
-// --------------------------------------------
+// ============================================
 // FILE SELECTION
-// --------------------------------------------
+// ============================================
 
-browseButton.addEventListener("click", () => {
+browseButton.addEventListener("click", function () {
     fileInput.click();
 });
 
 
-fileInput.addEventListener("change", () => {
+fileInput.addEventListener("change", function () {
 
     if (fileInput.files.length > 0) {
-
-        addFiles(
-            Array.from(fileInput.files)
-        );
-
+        addFiles(Array.from(fileInput.files));
     }
 
-    // Allows selecting the same files again
+    // Allows selecting the same file again
     fileInput.value = "";
+
 });
 
 
-// --------------------------------------------
-// DRAG & DROP
-// --------------------------------------------
+// ============================================
+// DRAG & DROP UPLOAD
+// ============================================
 
-dropZone.addEventListener("dragover", (event) => {
+dropZone.addEventListener("dragover", function (event) {
 
     event.preventDefault();
 
@@ -94,14 +77,14 @@ dropZone.addEventListener("dragover", (event) => {
 });
 
 
-dropZone.addEventListener("dragleave", () => {
+dropZone.addEventListener("dragleave", function () {
 
     dropZone.classList.remove("drag-over");
 
 });
 
 
-dropZone.addEventListener("drop", (event) => {
+dropZone.addEventListener("drop", function (event) {
 
     event.preventDefault();
 
@@ -115,15 +98,15 @@ dropZone.addEventListener("drop", (event) => {
 });
 
 
-// --------------------------------------------
+// ============================================
 // ADD FILES
-// --------------------------------------------
+// ============================================
 
 function addFiles(newFiles) {
 
     hideMessage();
 
-    const pdfFiles = newFiles.filter(file => {
+    const pdfFiles = newFiles.filter(function (file) {
 
         return (
             file.type === "application/pdf" ||
@@ -151,9 +134,9 @@ function addFiles(newFiles) {
 }
 
 
-// --------------------------------------------
+// ============================================
 // RENDER FILE LIST
-// --------------------------------------------
+// ============================================
 
 async function renderFiles() {
 
@@ -166,7 +149,7 @@ async function renderFiles() {
 
         const file = files[i];
 
-        let pageCount = "?";
+        let pageCount = null;
 
 
         try {
@@ -186,7 +169,8 @@ async function renderFiles() {
 
             console.warn(
                 "Could not read PDF:",
-                file.name
+                file.name,
+                error
             );
 
         }
@@ -202,53 +186,104 @@ async function renderFiles() {
         item.dataset.index = i;
 
 
-        item.innerHTML = `
+        // Create the file item without using
+        // complicated nested template strings.
 
-            <div class="drag-handle">
-                ☰
-            </div>
+        const dragHandle =
+            document.createElement("div");
 
-            <div class="pdf-icon">
-                PDF
-            </div>
-
-            <div class="file-info">
-
-                <div class="file-name"
-                     title="${escapeHtml(file.name)}">
-
-                    ${escapeHtml(file.name)}
-
-                </div>
-
-                <div class="file-details">
-
-                    ${formatFileSize(file.size)}
-                    ·
-                    ${pageCount === "?"
-                        ? "Page count unavailable"
-                        : pageCount +
-                          (pageCount === 1
-                              ? " page"
-                              : " pages")}
-
-                </div>
-
-            </div>
-
-            <button
-                type="button"
-                class="remove-button"
-                data-index="${i}"
-                title="Remove file"
-                aria-label="Remove ${escapeHtml(file.name)}"
-            >
-                ×
-            </button>
-        `;
+        dragHandle.className = "drag-handle";
+        dragHandle.textContent = "☰";
 
 
-        // Drag events
+        const pdfIcon =
+            document.createElement("div");
+
+        pdfIcon.className = "pdf-icon";
+        pdfIcon.textContent = "PDF";
+
+
+        const fileInfo =
+            document.createElement("div");
+
+        fileInfo.className = "file-info";
+
+
+        const fileName =
+            document.createElement("div");
+
+        fileName.className = "file-name";
+        fileName.textContent = file.name;
+        fileName.title = file.name;
+
+
+        const fileDetails =
+            document.createElement("div");
+
+        fileDetails.className = "file-details";
+
+
+        let pageText;
+
+        if (pageCount === null) {
+
+            pageText = "Page count unavailable";
+
+        } else {
+
+            pageText =
+                pageCount === 1
+                    ? "1 page"
+                    : pageCount + " pages";
+
+        }
+
+
+        fileDetails.textContent =
+            formatFileSize(file.size) +
+            " · " +
+            pageText;
+
+
+        fileInfo.appendChild(fileName);
+        fileInfo.appendChild(fileDetails);
+
+
+        const removeButton =
+            document.createElement("button");
+
+        removeButton.type = "button";
+        removeButton.className = "remove-button";
+        removeButton.textContent = "×";
+        removeButton.title = "Remove file";
+        removeButton.setAttribute(
+            "aria-label",
+            "Remove " + file.name
+        );
+
+
+        removeButton.addEventListener(
+            "click",
+            function () {
+
+                const index =
+                    Number(item.dataset.index);
+
+                files.splice(index, 1);
+
+                renderFiles();
+
+            }
+        );
+
+
+        item.appendChild(dragHandle);
+        item.appendChild(pdfIcon);
+        item.appendChild(fileInfo);
+        item.appendChild(removeButton);
+
+
+        // Drag/reorder events
 
         item.addEventListener(
             "dragstart",
@@ -276,81 +311,55 @@ async function renderFiles() {
     }
 
 
-    // Remove buttons
-
-    document
-        .querySelectorAll(".remove-button")
-        .forEach(button => {
-
-            button.addEventListener(
-                "click",
-                () => {
-
-                    const index =
-                        Number(button.dataset.index);
-
-                    files.splice(index, 1);
-
-                    renderFiles();
-
-                }
-            );
-
-        });
-
-
     updateSummary(totalPages);
 
 }
 
 
-// --------------------------------------------
-// SUMMARY
-// --------------------------------------------
+// ============================================
+// UPDATE SUMMARY
+// ============================================
 
 function updateSummary(totalPages) {
 
     if (files.length === 0) {
 
         fileSection.classList.add("hidden");
-
         optionsSection.classList.add("hidden");
 
         return;
-
     }
 
 
     fileSection.classList.remove("hidden");
-
     optionsSection.classList.remove("hidden");
 
 
     const fileText =
         files.length === 1
             ? "1 file"
-            : `${files.length} files`;
+            : files.length + " files";
 
 
     const pageText =
         totalPages === 1
             ? "1 page"
-            : `${totalPages} pages`;
+            : totalPages + " pages";
 
 
     fileSummary.textContent =
-        `${fileText} · ${pageText}`;
+        fileText + " · " + pageText;
 
 }
 
 
-// --------------------------------------------
+// ============================================
 // CLEAR ALL
-// --------------------------------------------
+// ============================================
 
 clearButton.addEventListener(
     "click",
-    () => {
+    function () {
 
         files = [];
 
@@ -362,9 +371,9 @@ clearButton.addEventListener(
 );
 
 
-// --------------------------------------------
+// ============================================
 // DRAG REORDERING
-// --------------------------------------------
+// ============================================
 
 function handleDragStart(event) {
 
@@ -438,9 +447,9 @@ function handleDragEnd(event) {
 }
 
 
-// --------------------------------------------
+// ============================================
 // COMBINE PDFs
-// --------------------------------------------
+// ============================================
 
 combineButton.addEventListener(
     "click",
@@ -465,7 +474,7 @@ async function combinePDFs() {
     hideMessage();
 
 
-    // UI state
+    // Disable button while processing
 
     combineButton.disabled = true;
 
@@ -483,13 +492,13 @@ async function combinePDFs() {
 
     try {
 
-        // Create new PDF
+        // Create a new blank PDF
 
         const mergedPdf =
             await PDFLib.PDFDocument.create();
 
 
-        // Process each PDF
+        // Process every PDF
 
         for (
             let i = 0;
@@ -501,7 +510,12 @@ async function combinePDFs() {
 
 
             progressText.textContent =
-                `Processing ${i + 1} of ${files.length}: ${file.name}`;
+                "Processing " +
+                (i + 1) +
+                " of " +
+                files.length +
+                ": " +
+                file.name;
 
 
             const progress =
@@ -511,10 +525,10 @@ async function combinePDFs() {
 
 
             progressBar.style.width =
-                `${progress}%`;
+                progress + "%";
 
 
-            // Read file
+            // Read PDF
 
             const bytes =
                 await file.arrayBuffer();
@@ -528,7 +542,7 @@ async function combinePDFs() {
                 );
 
 
-            // Copy pages
+            // Copy all pages
 
             const pages =
                 await mergedPdf.copyPages(
@@ -537,39 +551,39 @@ async function combinePDFs() {
                 );
 
 
-            pages.forEach(page => {
+            // Add pages to new PDF
+
+            pages.forEach(function (page) {
 
                 mergedPdf.addPage(page);
 
             });
 
 
-            // Allow browser to update UI
+            // Give browser time to update UI
 
-            await new Promise(
-                resolve =>
-                    setTimeout(resolve, 0)
-            );
+            await new Promise(function (resolve) {
+
+                setTimeout(resolve, 0);
+
+            });
 
         }
 
 
-        // Finish progress
+        // Save merged PDF
 
-        progressBar.style.width =
-            "100%";
+        progressBar.style.width = "100%";
 
         progressText.textContent =
             "Creating combined PDF...";
 
 
-        // Save
-
         const mergedBytes =
             await mergedPdf.save();
 
 
-        // Create download
+        // Create downloadable file
 
         const blob =
             new Blob(
@@ -590,6 +604,8 @@ async function combinePDFs() {
 
         link.href = url;
 
+
+        // Get filename
 
         let outputName =
             filenameInput.value.trim();
@@ -613,8 +629,7 @@ async function combinePDFs() {
         }
 
 
-        link.download =
-            outputName;
+        link.download = outputName;
 
 
         document.body.appendChild(link);
@@ -634,14 +649,19 @@ async function combinePDFs() {
 
 
         showMessage(
-            `Successfully combined ${files.length} PDF files.`,
+            "Successfully combined " +
+            files.length +
+            " PDF files.",
             "success"
         );
 
 
     } catch (error) {
 
-        console.error(error);
+        console.error(
+            "PDF combination error:",
+            error
+        );
 
 
         progressText.textContent =
@@ -649,7 +669,9 @@ async function combinePDFs() {
 
 
         showMessage(
-            "Unable to combine the PDFs. One of the files may be encrypted, corrupted, or otherwise unsupported.",
+            "Unable to combine the PDFs. " +
+            "One of the files may be encrypted, " +
+            "corrupted, or otherwise unsupported.",
             "error"
         );
 
@@ -668,36 +690,33 @@ async function combinePDFs() {
 }
 
 
-// --------------------------------------------
-// MESSAGE
-// --------------------------------------------
+// ============================================
+// MESSAGES
+// ============================================
 
-function showMessage(
-    text,
-    type
-) {
+function showMessage(text, type) {
 
     message.textContent = text;
 
     message.className =
-        `message ${type}`;
+        "message " + type;
 
 }
 
 
 function hideMessage() {
 
+    message.textContent = "";
+
     message.className =
         "message hidden";
-
-    message.textContent = "";
 
 }
 
 
-// --------------------------------------------
+// ============================================
 // FILE SIZE
-// --------------------------------------------
+// ============================================
 
 function formatFileSize(bytes) {
 
@@ -731,22 +750,6 @@ function formatFileSize(bytes) {
         " " +
         units[index]
     );
-
-}
-
-
-// --------------------------------------------
-// HTML ESCAPING
-// --------------------------------------------
-
-function escapeHtml(value) {
-
-    return value
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;")
-        .replace(/'/g, "&#039;");
 
 }
 ```
