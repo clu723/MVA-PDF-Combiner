@@ -1,755 +1,288 @@
-```javascript
-// ============================================
-// PDF COMBINER
-// ============================================
+document.addEventListener("DOMContentLoaded", function () {
+    let files = [];
+    let draggedIndex = null;
 
-let files = [];
-let draggedIndex = null;
+    const fileInput = document.getElementById("fileInput");
+    const dropZone = document.getElementById("dropZone");
+    const fileList = document.getElementById("fileList");
+    const combineButton = document.getElementById("combineButton");
+    const clearButton = document.getElementById("clearButton");
+    const outputName = document.getElementById("outputName");
+    const message = document.getElementById("message");
+    const progressContainer = document.getElementById("progressContainer");
+    const progressBar = document.getElementById("progressBar");
+    const fileSummary = document.getElementById("fileSummary");
 
-
-// ============================================
-// ELEMENTS
-// ============================================
-
-const dropZone = document.getElementById("dropZone");
-const browseButton = document.getElementById("browseButton");
-const fileInput = document.getElementById("fileInput");
-
-const fileSection = document.getElementById("fileSection");
-const optionsSection = document.getElementById("optionsSection");
-const fileList = document.getElementById("fileList");
-const fileSummary = document.getElementById("fileSummary");
-
-const clearButton = document.getElementById("clearButton");
-const filenameInput = document.getElementById("filename");
-
-const combineButton = document.getElementById("combineButton");
-const combineButtonText =
-    document.getElementById("combineButtonText");
-
-const spinner =
-    document.getElementById("spinner");
-
-const progressContainer =
-    document.getElementById("progressContainer");
-
-const progressBar =
-    document.getElementById("progressBar");
-
-const progressText =
-    document.getElementById("progressText");
-
-const message =
-    document.getElementById("message");
-
-
-// ============================================
-// FILE SELECTION
-// ============================================
-
-browseButton.addEventListener("click", function () {
-    fileInput.click();
-});
-
-
-fileInput.addEventListener("change", function () {
-
-    if (fileInput.files.length > 0) {
-        addFiles(Array.from(fileInput.files));
-    }
-
-    // Allows selecting the same file again
-    fileInput.value = "";
-
-});
-
-
-// ============================================
-// DRAG & DROP UPLOAD
-// ============================================
-
-dropZone.addEventListener("dragover", function (event) {
-
-    event.preventDefault();
-
-    dropZone.classList.add("drag-over");
-
-});
-
-
-dropZone.addEventListener("dragleave", function () {
-
-    dropZone.classList.remove("drag-over");
-
-});
-
-
-dropZone.addEventListener("drop", function (event) {
-
-    event.preventDefault();
-
-    dropZone.classList.remove("drag-over");
-
-    const droppedFiles =
-        Array.from(event.dataTransfer.files);
-
-    addFiles(droppedFiles);
-
-});
-
-
-// ============================================
-// ADD FILES
-// ============================================
-
-function addFiles(newFiles) {
-
-    hideMessage();
-
-    const pdfFiles = newFiles.filter(function (file) {
-
-        return (
-            file.type === "application/pdf" ||
-            file.name.toLowerCase().endsWith(".pdf")
-        );
-
+    // Browse button
+    fileInput.addEventListener("change", function () {
+        addFiles(fileInput.files);
+        fileInput.value = "";
     });
 
-
-    if (pdfFiles.length === 0) {
-
-        showMessage(
-            "Please select PDF files.",
-            "error"
-        );
-
-        return;
-    }
-
-
-    files.push(...pdfFiles);
-
-    renderFiles();
-
-}
-
-
-// ============================================
-// RENDER FILE LIST
-// ============================================
-
-async function renderFiles() {
-
-    fileList.innerHTML = "";
-
-    let totalPages = 0;
-
-
-    for (let i = 0; i < files.length; i++) {
-
-        const file = files[i];
-
-        let pageCount = null;
-
-
-        try {
-
-            const bytes =
-                await file.arrayBuffer();
-
-            const pdf =
-                await PDFLib.PDFDocument.load(bytes);
-
-            pageCount =
-                pdf.getPageCount();
-
-            totalPages += pageCount;
-
-        } catch (error) {
-
-            console.warn(
-                "Could not read PDF:",
-                file.name,
-                error
-            );
-
-        }
-
-
-        const item =
-            document.createElement("div");
-
-        item.className = "file-item";
-
-        item.draggable = true;
-
-        item.dataset.index = i;
-
-
-        // Create the file item without using
-        // complicated nested template strings.
-
-        const dragHandle =
-            document.createElement("div");
-
-        dragHandle.className = "drag-handle";
-        dragHandle.textContent = "☰";
-
-
-        const pdfIcon =
-            document.createElement("div");
-
-        pdfIcon.className = "pdf-icon";
-        pdfIcon.textContent = "PDF";
-
-
-        const fileInfo =
-            document.createElement("div");
-
-        fileInfo.className = "file-info";
-
-
-        const fileName =
-            document.createElement("div");
-
-        fileName.className = "file-name";
-        fileName.textContent = file.name;
-        fileName.title = file.name;
-
-
-        const fileDetails =
-            document.createElement("div");
-
-        fileDetails.className = "file-details";
-
-
-        let pageText;
-
-        if (pageCount === null) {
-
-            pageText = "Page count unavailable";
-
-        } else {
-
-            pageText =
-                pageCount === 1
-                    ? "1 page"
-                    : pageCount + " pages";
-
-        }
-
-
-        fileDetails.textContent =
-            formatFileSize(file.size) +
-            " · " +
-            pageText;
-
-
-        fileInfo.appendChild(fileName);
-        fileInfo.appendChild(fileDetails);
-
-
-        const removeButton =
-            document.createElement("button");
-
-        removeButton.type = "button";
-        removeButton.className = "remove-button";
-        removeButton.textContent = "×";
-        removeButton.title = "Remove file";
-        removeButton.setAttribute(
-            "aria-label",
-            "Remove " + file.name
-        );
-
-
-        removeButton.addEventListener(
-            "click",
-            function () {
-
-                const index =
-                    Number(item.dataset.index);
-
-                files.splice(index, 1);
-
-                renderFiles();
-
+    // Drag and drop
+    dropZone.addEventListener("dragover", function (event) {
+        event.preventDefault();
+        dropZone.classList.add("dragover");
+    });
+
+    dropZone.addEventListener("dragleave", function () {
+        dropZone.classList.remove("dragover");
+    });
+
+    dropZone.addEventListener("drop", function (event) {
+        event.preventDefault();
+        dropZone.classList.remove("dragover");
+
+        addFiles(event.dataTransfer.files);
+    });
+
+    function addFiles(selectedFiles) {
+        for (const file of selectedFiles) {
+            if (file.type !== "application/pdf") {
+                showMessage("Only PDF files can be added.", "error");
+                continue;
             }
-        );
 
-
-        item.appendChild(dragHandle);
-        item.appendChild(pdfIcon);
-        item.appendChild(fileInfo);
-        item.appendChild(removeButton);
-
-
-        // Drag/reorder events
-
-        item.addEventListener(
-            "dragstart",
-            handleDragStart
-        );
-
-        item.addEventListener(
-            "dragover",
-            handleDragOver
-        );
-
-        item.addEventListener(
-            "drop",
-            handleDrop
-        );
-
-        item.addEventListener(
-            "dragend",
-            handleDragEnd
-        );
-
-
-        fileList.appendChild(item);
-
-    }
-
-
-    updateSummary(totalPages);
-
-}
-
-
-// ============================================
-// UPDATE SUMMARY
-// ============================================
-
-function updateSummary(totalPages) {
-
-    if (files.length === 0) {
-
-        fileSection.classList.add("hidden");
-        optionsSection.classList.add("hidden");
-
-        return;
-    }
-
-
-    fileSection.classList.remove("hidden");
-    optionsSection.classList.remove("hidden");
-
-
-    const fileText =
-        files.length === 1
-            ? "1 file"
-            : files.length + " files";
-
-
-    const pageText =
-        totalPages === 1
-            ? "1 page"
-            : totalPages + " pages";
-
-
-    fileSummary.textContent =
-        fileText + " · " + pageText;
-
-}
-
-
-// ============================================
-// CLEAR ALL
-// ============================================
-
-clearButton.addEventListener(
-    "click",
-    function () {
-
-        files = [];
+            files.push(file);
+        }
 
         renderFiles();
-
-        hideMessage();
-
-    }
-);
-
-
-// ============================================
-// DRAG REORDERING
-// ============================================
-
-function handleDragStart(event) {
-
-    draggedIndex =
-        Number(event.currentTarget.dataset.index);
-
-    event.currentTarget.classList.add(
-        "dragging"
-    );
-
-}
-
-
-function handleDragOver(event) {
-
-    event.preventDefault();
-
-}
-
-
-function handleDrop(event) {
-
-    event.preventDefault();
-
-    const targetIndex =
-        Number(event.currentTarget.dataset.index);
-
-
-    if (
-        draggedIndex === null ||
-        draggedIndex === targetIndex
-    ) {
-
-        return;
-
     }
 
+    async function renderFiles() {
+        fileList.innerHTML = "";
 
-    const draggedFile =
-        files[draggedIndex];
+        if (files.length === 0) {
+            fileList.innerHTML =
+                '<div class="empty-state">No PDF files selected.</div>';
 
+            updateSummary();
+            return;
+        }
 
-    files.splice(
-        draggedIndex,
-        1
-    );
-
-
-    files.splice(
-        targetIndex,
-        0,
-        draggedFile
-    );
-
-
-    draggedIndex = null;
-
-    renderFiles();
-
-}
-
-
-function handleDragEnd(event) {
-
-    event.currentTarget.classList.remove(
-        "dragging"
-    );
-
-    draggedIndex = null;
-
-}
-
-
-// ============================================
-// COMBINE PDFs
-// ============================================
-
-combineButton.addEventListener(
-    "click",
-    combinePDFs
-);
-
-
-async function combinePDFs() {
-
-    if (files.length === 0) {
-
-        showMessage(
-            "Please add at least one PDF.",
-            "error"
-        );
-
-        return;
-
-    }
-
-
-    hideMessage();
-
-
-    // Disable button while processing
-
-    combineButton.disabled = true;
-
-    combineButtonText.textContent =
-        "Combining...";
-
-    spinner.classList.remove("hidden");
-
-    progressContainer.classList.remove(
-        "hidden"
-    );
-
-    progressBar.style.width = "0%";
-
-
-    try {
-
-        // Create a new blank PDF
-
-        const mergedPdf =
-            await PDFLib.PDFDocument.create();
-
-
-        // Process every PDF
-
-        for (
-            let i = 0;
-            i < files.length;
-            i++
-        ) {
-
+        for (let i = 0; i < files.length; i++) {
             const file = files[i];
 
+            const row = document.createElement("div");
+            row.className = "file-row";
+            row.draggable = true;
+            row.dataset.index = i;
 
-            progressText.textContent =
-                "Processing " +
-                (i + 1) +
-                " of " +
-                files.length +
-                ": " +
-                file.name;
+            const handle = document.createElement("div");
+            handle.className = "drag-handle";
+            handle.textContent = "☷";
 
+            const icon = document.createElement("div");
+            icon.className = "pdf-icon";
+            icon.textContent = "PDF";
 
-            const progress =
-                Math.round(
-                    (i / files.length) * 100
-                );
+            const info = document.createElement("div");
+            info.className = "file-info";
 
+            const name = document.createElement("div");
+            name.className = "file-name";
+            name.textContent = file.name;
 
-            progressBar.style.width =
-                progress + "%";
+            const details = document.createElement("div");
+            details.className = "file-details";
 
+            let pageCount = "?";
 
-            // Read PDF
+            try {
+                const bytes = await file.arrayBuffer();
+                const pdf = await PDFLib.PDFDocument.load(bytes);
+                pageCount = pdf.getPageCount();
+            } catch (error) {
+                console.error("Could not read PDF:", error);
+            }
 
-            const bytes =
-                await file.arrayBuffer();
+            details.textContent =
+                formatFileSize(file.size) +
+                " • " +
+                pageCount +
+                " page" +
+                (pageCount === 1 ? "" : "s");
 
+            info.appendChild(name);
+            info.appendChild(details);
 
-            // Load PDF
+            const removeButton = document.createElement("button");
+            removeButton.className = "remove-file";
+            removeButton.type = "button";
+            removeButton.textContent = "×";
+            removeButton.title = "Remove file";
 
-            const pdf =
-                await PDFLib.PDFDocument.load(
-                    bytes
-                );
-
-
-            // Copy all pages
-
-            const pages =
-                await mergedPdf.copyPages(
-                    pdf,
-                    pdf.getPageIndices()
-                );
-
-
-            // Add pages to new PDF
-
-            pages.forEach(function (page) {
-
-                mergedPdf.addPage(page);
-
+            removeButton.addEventListener("click", function () {
+                files.splice(i, 1);
+                renderFiles();
             });
 
+            row.appendChild(handle);
+            row.appendChild(icon);
+            row.appendChild(info);
+            row.appendChild(removeButton);
 
-            // Give browser time to update UI
-
-            await new Promise(function (resolve) {
-
-                setTimeout(resolve, 0);
-
+            row.addEventListener("dragstart", function () {
+                draggedIndex = i;
+                row.classList.add("dragging");
             });
 
+            row.addEventListener("dragend", function () {
+                draggedIndex = null;
+                row.classList.remove("dragging");
+            });
+
+            row.addEventListener("dragover", function (event) {
+                event.preventDefault();
+            });
+
+            row.addEventListener("drop", function (event) {
+                event.preventDefault();
+
+                if (draggedIndex === null || draggedIndex === i) {
+                    return;
+                }
+
+                const movedFile = files.splice(draggedIndex, 1)[0];
+                files.splice(i, 0, movedFile);
+
+                renderFiles();
+            });
+
+            fileList.appendChild(row);
         }
 
+        updateSummary();
+    }
 
-        // Save merged PDF
+    function updateSummary() {
+        if (files.length === 0) {
+            fileSummary.textContent = "No files selected";
+        } else {
+            fileSummary.textContent =
+                files.length +
+                " PDF" +
+                (files.length === 1 ? "" : "s") +
+                " selected";
+        }
 
-        progressBar.style.width = "100%";
+        combineButton.disabled = files.length === 0;
+        clearButton.disabled = files.length === 0;
+    }
 
-        progressText.textContent =
-            "Creating combined PDF...";
+    clearButton.addEventListener("click", function () {
+        files = [];
+        renderFiles();
+        hideMessage();
+    });
 
+    combineButton.addEventListener("click", combinePDFs);
 
-        const mergedBytes =
-            await mergedPdf.save();
+    async function combinePDFs() {
+        if (files.length === 0) {
+            showMessage("Please select at least one PDF.", "error");
+            return;
+        }
 
+        combineButton.disabled = true;
+        progressContainer.style.display = "block";
+        progressBar.style.width = "0%";
+        hideMessage();
 
-        // Create downloadable file
+        try {
+            const mergedPdf = await PDFLib.PDFDocument.create();
 
-        const blob =
-            new Blob(
-                [mergedBytes],
-                {
-                    type: "application/pdf"
-                }
+            for (let i = 0; i < files.length; i++) {
+                const file = files[i];
+
+                const bytes = await file.arrayBuffer();
+
+                const sourcePdf =
+                    await PDFLib.PDFDocument.load(bytes);
+
+                const pages = await mergedPdf.copyPages(
+                    sourcePdf,
+                    sourcePdf.getPageIndices()
+                );
+
+                pages.forEach(function (page) {
+                    mergedPdf.addPage(page);
+                });
+
+                const percent = Math.round(
+                    ((i + 1) / files.length) * 100
+                );
+
+                progressBar.style.width = percent + "%";
+            }
+
+            const pdfBytes = await mergedPdf.save();
+
+            const blob = new Blob([pdfBytes], {
+                type: "application/pdf"
+            });
+
+            let filename = outputName.value.trim();
+
+            if (!filename) {
+                filename = "Combined PDF";
+            }
+
+            if (!filename.toLowerCase().endsWith(".pdf")) {
+                filename += ".pdf";
+            }
+
+            const url = URL.createObjectURL(blob);
+
+            const link = document.createElement("a");
+            link.href = url;
+            link.download = filename;
+
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+
+            URL.revokeObjectURL(url);
+
+            showMessage(
+                "Your PDFs have been combined successfully.",
+                "success"
             );
 
+        } catch (error) {
+            console.error(error);
 
-        const url =
-            URL.createObjectURL(blob);
-
-
-        const link =
-            document.createElement("a");
-
-
-        link.href = url;
-
-
-        // Get filename
-
-        let outputName =
-            filenameInput.value.trim();
-
-
-        if (!outputName) {
-
-            outputName = "combined.pdf";
-
+            showMessage(
+                "There was a problem combining the PDFs. Make sure the files are valid PDF documents.",
+                "error"
+            );
         }
-
-
-        if (
-            !outputName
-                .toLowerCase()
-                .endsWith(".pdf")
-        ) {
-
-            outputName += ".pdf";
-
-        }
-
-
-        link.download = outputName;
-
-
-        document.body.appendChild(link);
-
-        link.click();
-
-        link.remove();
-
-
-        URL.revokeObjectURL(url);
-
-
-        // Success
-
-        progressText.textContent =
-            "Done! Your combined PDF is ready.";
-
-
-        showMessage(
-            "Successfully combined " +
-            files.length +
-            " PDF files.",
-            "success"
-        );
-
-
-    } catch (error) {
-
-        console.error(
-            "PDF combination error:",
-            error
-        );
-
-
-        progressText.textContent =
-            "Something went wrong.";
-
-
-        showMessage(
-            "Unable to combine the PDFs. " +
-            "One of the files may be encrypted, " +
-            "corrupted, or otherwise unsupported.",
-            "error"
-        );
-
-
-    } finally {
 
         combineButton.disabled = false;
-
-        combineButtonText.textContent =
-            "Combine PDFs";
-
-        spinner.classList.add("hidden");
-
     }
 
-}
-
-
-// ============================================
-// MESSAGES
-// ============================================
-
-function showMessage(text, type) {
-
-    message.textContent = text;
-
-    message.className =
-        "message " + type;
-
-}
-
-
-function hideMessage() {
-
-    message.textContent = "";
-
-    message.className =
-        "message hidden";
-
-}
-
-
-// ============================================
-// FILE SIZE
-// ============================================
-
-function formatFileSize(bytes) {
-
-    if (bytes === 0) {
-        return "0 Bytes";
+    function showMessage(text, type) {
+        message.textContent = text;
+        message.className = "message " + type;
+        message.style.display = "block";
     }
 
+    function hideMessage() {
+        message.style.display = "none";
+        message.textContent = "";
+    }
 
-    const units = [
-        "Bytes",
-        "KB",
-        "MB",
-        "GB"
-    ];
+    function formatFileSize(bytes) {
+        if (bytes < 1024) {
+            return bytes + " B";
+        }
 
+        if (bytes < 1024 * 1024) {
+            return (bytes / 1024).toFixed(1) + " KB";
+        }
 
-    const index =
-        Math.floor(
-            Math.log(bytes) /
-            Math.log(1024)
-        );
+        return (bytes / (1024 * 1024)).toFixed(1) + " MB";
+    }
 
-
-    return (
-        parseFloat(
-            (
-                bytes /
-                Math.pow(1024, index)
-            ).toFixed(2)
-        ) +
-        " " +
-        units[index]
-    );
-
-}
-```
+    renderFiles();
+});
