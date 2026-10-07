@@ -45,27 +45,16 @@
 
 
         <!-- DROP ZONE -->
-        <section
-            id="dropZone"
-            class="drop-zone"
-        >
-
-            <div class="upload-icon">
-                ↑
-            </div>
-
-            <h2>Drop PDF files here</h2>
-
+        <div class="drop-zone" id="dropZone">
+            <div class="drop-icon">📄</div>
+        
+            <h3>Drop PDF files here</h3>
             <p>or</p>
-
-            <button
-                type="button"
-                id="browseButton"
-                class="browse-button"
-            >
+        
+            <button type="button" id="browseButton">
                 Browse Files
             </button>
-
+        
             <input
                 type="file"
                 id="fileInput"
@@ -73,12 +62,11 @@
                 multiple
                 hidden
             >
-
-            <small>
-                Select multiple PDF files at once
-            </small>
-
-        </section>
+        
+            <p class="drop-help">
+                You can select multiple PDF files at once.
+            </p>
+        </div>
 
 
         <!-- FILE LIST -->
