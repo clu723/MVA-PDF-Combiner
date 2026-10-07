@@ -19,11 +19,64 @@ document.addEventListener("DOMContentLoaded", function () {
     });
     
     
-    // File selection
-    fileInput.addEventListener("change", function () {
-        addFiles(fileInput.files);
-        fileInput.value = "";
+    // -----------------------------
+// File selection
+// -----------------------------
+
+fileInput.addEventListener("change", function (event) {
+    const selectedFiles = event.target.files;
+
+    console.log("Files selected:", selectedFiles);
+
+    if (!selectedFiles || selectedFiles.length === 0) {
+        return;
+    }
+
+    addFiles(selectedFiles);
+});
+
+
+// -----------------------------
+// Add files
+// -----------------------------
+
+async function addFiles(selectedFiles) {
+
+    console.log("addFiles called");
+
+    const pdfFiles = Array.from(selectedFiles).filter(function (file) {
+
+        console.log(
+            "Checking file:",
+            file.name,
+            file.type,
+            file.size
+        );
+
+        return (
+            file.type === "application/pdf" ||
+            file.name.toLowerCase().endsWith(".pdf")
+        );
     });
+
+    console.log("PDF files found:", pdfFiles);
+
+    if (pdfFiles.length === 0) {
+        showMessage("Please select PDF files.", "error");
+        return;
+    }
+
+    pdfFiles.forEach(function (file) {
+        files.push({
+            file: file,
+            pages: null
+        });
+    });
+
+    console.log("Files array:", files);
+
+    await renderFiles();
+}
 
     // Drag and drop
     dropZone.addEventListener("dragover", function (event) {
@@ -42,18 +95,6 @@ document.addEventListener("DOMContentLoaded", function () {
         addFiles(event.dataTransfer.files);
     });
 
-    function addFiles(selectedFiles) {
-        for (const file of selectedFiles) {
-            if (file.type !== "application/pdf") {
-                showMessage("Only PDF files can be added.", "error");
-                continue;
-            }
-
-            files.push(file);
-        }
-
-        renderFiles();
-    }
 
     async function renderFiles() {
         fileList.innerHTML = "";
