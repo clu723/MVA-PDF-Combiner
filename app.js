@@ -13,7 +13,13 @@ document.addEventListener("DOMContentLoaded", function () {
     const progressBar = document.getElementById("progressBar");
     const fileSummary = document.getElementById("fileSummary");
 
-    // Browse button
+   // Browse Files button
+    browseButton.addEventListener("click", function () {
+        fileInput.click();
+    });
+    
+    
+    // File selection
     fileInput.addEventListener("change", function () {
         addFiles(fileInput.files);
         fileInput.value = "";
